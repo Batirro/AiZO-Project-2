@@ -13,7 +13,7 @@ public:
 
     void addEdge(int start, int end, int weight) override;
     void print() const override;
+    DynamicArray getEdges() const override;
     
-    // Allows iterating over neighbors for given vertex
     const LinkedList& getNeighbors(int vertex) const;
 };

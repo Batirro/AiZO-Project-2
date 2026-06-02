@@ -19,7 +19,7 @@ void AdjacencyList::addEdge(int start, int end, int weight) {
 }
 
 void AdjacencyList::print() const {
-    std::cout << "Adjacency List Representation:" << std::endl;
+    std::cout << "Reprezentacja Listowa (Lista Sasiedztwa):" << std::endl;
     for (int i = 0; i < vertices; ++i) {
         std::cout << i << " -> ";
         for (const auto& edge : list[i]) {
@@ -34,4 +34,22 @@ const LinkedList& AdjacencyList::getNeighbors(int vertex) const {
         throw std::out_of_range("Vertex index out of bounds");
     }
     return list[vertex];
+}
+
+DynamicArray AdjacencyList::getEdges() const {
+    DynamicArray edges;
+    
+    for (int i = 0; i < vertices; i++) {
+        for (const auto& edge : list[i]) {
+            if (isDirected) {
+                edges.push_back(edge);
+            } else {
+                if (edge.start <= edge.end) {
+                    edges.push_back(edge);
+                }
+            }
+        }
+    }
+    
+    return edges;
 }

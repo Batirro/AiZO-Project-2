@@ -1,7 +1,7 @@
 #include "IncidenceMatrix.hpp"
 
 IncidenceMatrix::IncidenceMatrix(int v, bool directed) : Graph(v, directed) {
-    capacityEdges = 10; // Initial arbitrary capacity
+    capacityEdges = 10;
     matrix = new int*[vertices];
     for (int i = 0; i < vertices; ++i) {
         matrix[i] = new int[capacityEdges];
@@ -9,6 +9,7 @@ IncidenceMatrix::IncidenceMatrix(int v, bool directed) : Graph(v, directed) {
             matrix[i][j] = 0;
         }
     }
+    edgeInfo = new Edge[capacityEdges];
 }
 
 IncidenceMatrix::~IncidenceMatrix() {
@@ -16,6 +17,7 @@ IncidenceMatrix::~IncidenceMatrix() {
         delete[] matrix[i];
     }
     delete[] matrix;
+    delete[] edgeInfo;
 }
 
 void IncidenceMatrix::resizeMatrix(int newCapacityEdges) {
@@ -30,12 +32,19 @@ void IncidenceMatrix::resizeMatrix(int newCapacityEdges) {
         }
     }
 
+    Edge* newEdgeInfo = new Edge[newCapacityEdges];
+    for (int i = 0; i < capacityEdges; ++i) {
+        newEdgeInfo[i] = edgeInfo[i];
+    }
+
     for (int i = 0; i < vertices; ++i) {
         delete[] matrix[i];
     }
     delete[] matrix;
+    delete[] edgeInfo;
 
     matrix = newMatrix;
+    edgeInfo = newEdgeInfo;
     capacityEdges = newCapacityEdges;
 }
 
@@ -45,6 +54,8 @@ void IncidenceMatrix::addEdge(int start, int end, int weight) {
     }
 
     int edgeIndex = numEdges;
+    
+    edgeInfo[edgeIndex] = Edge(start, end, weight);
     
     if (isDirected) {
         matrix[start][edgeIndex] = weight;
@@ -58,8 +69,7 @@ void IncidenceMatrix::addEdge(int start, int end, int weight) {
 }
 
 void IncidenceMatrix::print() const {
-    std::cout << "Incidence Matrix Representation:" << std::endl;
-    // Print edge header
+    std::cout << "Reprezentacja Macierzowa (Macierz Incydencji):" << std::endl;
     std::cout << "    ";
     for (int j = 0; j < numEdges; ++j) {
         std::cout << "e" << std::left << std::setw(3) << j;
@@ -73,4 +83,14 @@ void IncidenceMatrix::print() const {
         }
         std::cout << std::endl;
     }
+}
+
+DynamicArray IncidenceMatrix::getEdges() const {
+    DynamicArray edges;
+    
+    for (int i = 0; i < numEdges; i++) {
+        edges.push_back(edgeInfo[i]);
+    }
+    
+    return edges;
 }

@@ -15,10 +15,8 @@ public:
 
     virtual void addEdge(int start, int end, int weight) = 0;
     virtual void print() const = 0;
+    virtual DynamicArray getEdges() const = 0;
     
-    // virtual int getWeight(int start, int end) const = 0;
-    // virtual DynamicArray getNeighbors(int vertex) const = 0;
-
     int getVerticesCount() const { return vertices; }
     int getEdgesCount() const { return numEdges; }
     bool getIsDirected() const { return isDirected; }
