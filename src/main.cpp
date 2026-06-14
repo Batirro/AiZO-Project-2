@@ -7,6 +7,7 @@
 #include "PrimMST.hpp"
 #include "KruskalMST.hpp"
 #include "DijkstraSP.hpp"
+#include "BellmanFordSP.hpp"
 
 int main(int argc, char* argv[]) {
     std::cout << "Aizo Project 2 - Graphs" << std::endl;
@@ -71,6 +72,24 @@ int main(int argc, char* argv[]) {
     std::cout << "\n--- Dijkstra (macierz incydencji) ---" << std::endl;
     SPResult dijkstraMatrix = dijkstra.findSP(graphSPMatrix, startVertex);
     dijkstra.printSP(dijkstraMatrix, startVertex, endVertex, graphSPMatrix->getVerticesCount());
+
+    std::cout << "\n--- Bellman-Ford (lista sasiedztwa) ---" << std::endl;
+    SPResult bfResult = BellmanFordSP::findSP(graphSP, startVertex);
+    BellmanFordSP::printSP(bfResult, startVertex, endVertex, graphSP->getVerticesCount());
+
+    std::cout << "\n--- Bellman-Ford (macierz incydencji) ---" << std::endl;
+    SPResult bfMatrix = BellmanFordSP::findSP(graphSPMatrix, startVertex);
+    BellmanFordSP::printSP(bfMatrix, startVertex, endVertex, graphSPMatrix->getVerticesCount());
+
+    // Porownanie
+    std::cout << "\n--- Porownanie SP ---" << std::endl;
+    std::cout << "Koszt SP (Dijkstra):     " << dijkstraResult.dist[endVertex] << std::endl;
+    std::cout << "Koszt SP (Bellman-Ford): " << bfResult.dist[endVertex] << std::endl;
+    if (dijkstraResult.dist[endVertex] == bfResult.dist[endVertex]) {
+        std::cout << "SUKCES: Oba algorytmy daly ten sam koszt!" << std::endl;
+    } else {
+        std::cout << "UWAGA: Rozne koszty - sprawdz implementacje" << std::endl;
+    }
 
     delete graph;
     delete graphMatrix;
