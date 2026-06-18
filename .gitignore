@@ -49,3 +49,4 @@ _deps/
 *.swp
 build/
 .zed/
+data/
