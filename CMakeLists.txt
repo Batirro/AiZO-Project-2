@@ -16,3 +16,4 @@ add_executable(AizoProject2 ${SOURCES})
 # Link the pre-compiled library from the professor
 target_link_directories(AizoProject2 PRIVATE ${CMAKE_SOURCE_DIR}/lib)
 target_link_libraries(AizoProject2 parameters)
+add_compile_definitions(PROJECT_DATA_DIR="${CMAKE_SOURCE_DIR}/data")
