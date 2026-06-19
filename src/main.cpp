@@ -20,39 +20,47 @@
 // Help
 static void printHelp() {
     std::cout << "Uzycie: ./AizoProject2 [parametry]\n" << std::endl;
-    std::cout << "Pomoc (-h / --help):" << std::endl;
-    std::cout << "Tryby dzialania (-m / --mode):" << std::endl;
-    std::cout << "  singleFile  - Wczytaj graf z pliku i rozwiaz problem" << std::endl;
-    std::cout << "  benchmark   - Przeprowadz badania wydajnosci" << std::endl;
-    std::cout << "Problemy (-p / --problem):" << std::endl;
-    std::cout << "  mst         - Minimalne drzewo rozpinajace" << std::endl;
-    std::cout << "  sp          - Najkrotsza sciezka" << std::endl;
-    std::cout << "  mf          - Maksymalny przeplyw (niezaimplementowany)\n" << std::endl;
-    std::cout << "Algorytmy (-a / --algorithm):" << std::endl;
-    std::cout << "  allAlgorithms - Wszystkie algorytmy dla danego problemu" << std::endl;
-    std::cout << "  prim          - Algorytm Prima (MST)" << std::endl;
-    std::cout << "  kruskal       - Algorytm Kruskala (MST)" << std::endl;
-    std::cout << "  dijkstra      - Algorytm Dijkstry (SP)" << std::endl;
-    std::cout << "  bellmanFord   - Algorytm Forda-Bellmana (SP)\n" << std::endl;
-    std::cout << "Struktury (-s / --structure):" << std::endl;
-    std::cout << "  allStructures   - Obie struktury" << std::endl;
-    std::cout << "  incidenceMatrix - Macierz incydencji" << std::endl;
-    std::cout << "  adjacencyList   - Lista sasiedztwa\n" << std::endl;
+
+    std::cout << "Tryby dzialania:" << std::endl;
+    std::cout << "  --singleFile   Wczytaj graf z pliku lub wygeneruj i rozwiaz problem" << std::endl;
+    std::cout << "  --benchmark    Przeprowadz badania wydajnosci" << std::endl;
+    std::cout << "  --help         Wyswietl te pomoc\n" << std::endl;
+
+    std::cout << "Problemy (--problem <id>):" << std::endl;
+    std::cout << "  0  mst   Minimalne drzewo rozpinajace" << std::endl;
+    std::cout << "  1  sp    Najkrotsza sciezka\n" << std::endl;
+
+    std::cout << "Algorytmy (--algorithm <id>):" << std::endl;
+    std::cout << "  0  allAlgorithms  Wszystkie algorytmy dla danego problemu" << std::endl;
+    std::cout << "  1  prim           Algorytm Prima (MST)" << std::endl;
+    std::cout << "  2  kruskal        Algorytm Kruskala (MST)" << std::endl;
+    std::cout << "  3  dijkstra       Algorytm Dijkstry (SP)" << std::endl;
+    std::cout << "  4  bellmanFord    Algorytm Forda-Bellmana (SP)\n" << std::endl;
+
+    std::cout << "Struktury (--structure <id>):" << std::endl;
+    std::cout << "  0  allStructures    Obie struktury" << std::endl;
+    std::cout << "  1  incidenceMatrix  Macierz incydencji" << std::endl;
+    std::cout << "  2  adjacencyList    Lista sasiedztwa\n" << std::endl;
+
     std::cout << "Parametry trybu singleFile:" << std::endl;
-    std::cout << "  -f <plik>        - Plik wejsciowy z grafem" << std::endl;
-    std::cout << "  -n <liczba>      - Generuj graf o podanej liczbie wierzcholkow" << std::endl;
-    std::cout << "  -d <gestosc>     - Gestosc grafu w % (np. 50)" << std::endl;
-    std::cout << "  --vs <wierzch>   - Wierzcholek startowy (SP)" << std::endl;
-    std::cout << "  --ve <wierzch>   - Wierzcholek koncowy (SP)\n" << std::endl;
+    std::cout << "  --inputFile  <plik>    Wczytaj graf z pliku" << std::endl;
+    std::cout << "  --outputFile <plik>    Zapisz wygenerowany graf do data/<plik>" << std::endl;
+    std::cout << "  --vertexCount <n>      Generuj graf o n wierzcholkach" << std::endl;
+    std::cout << "  --density <d>          Gestosc grafu w % (np. 50)" << std::endl;
+    std::cout << "  --vertexStart <v>      Wierzcholek startowy (SP)" << std::endl;
+    std::cout << "  --vertexEnd <v>        Wierzcholek koncowy (SP)\n" << std::endl;
+
     std::cout << "Parametry trybu benchmark:" << std::endl;
-    std::cout << "  -n <liczba>      - Liczba wierzcholkow" << std::endl;
-    std::cout << "  -d <gestosc>     - Gestosc grafu w % (25/50/75/99)" << std::endl;
-    std::cout << "  -i <iteracje>    - Liczba powtorzen (domyslnie 50)" << std::endl;
-    std::cout << "  -o <plik>        - Plik wyjsciowy CSV z wynikami\n" << std::endl;
+    std::cout << "  --vertexCount <n>      Liczba wierzcholkow" << std::endl;
+    std::cout << "  --density <d>          Gestosc grafu w % (25/50/75/99)" << std::endl;
+    std::cout << "  --iterations <i>       Liczba powtorzen (domyslnie 50)" << std::endl;
+    std::cout << "  --resultsFile <plik>   Plik CSV z wynikami w data/<plik>\n" << std::endl;
+
     std::cout << "Przykladowe wywolania:" << std::endl;
-    std::cout << "  ./AizoProject2 -m singleFile -p mst -a prim -s adjacencyList -f graf.txt" << std::endl;
-    std::cout << "  ./AizoProject2 -m benchmark -p sp -a allAlgorithms -s allStructures -n 100 -d 50 -i 50 -o wyniki.csv" << std::endl;
-    std::cout << "  ./AizoProject2 -m help" << std::endl;
+    std::cout << "  ./AizoProject2 --singleFile --problem 0 --algorithm 1 --structure 2 --vertexCount 8 --density 50" << std::endl;
+    std::cout << "  ./AizoProject2 --singleFile --problem 0 --algorithm 1 --structure 2 --inputFile graf.txt" << std::endl;
+    std::cout << "  ./AizoProject2 --singleFile --problem 1 --algorithm 3 --structure 2 --vertexCount 8 --density 50 --vertexStart 0 --vertexEnd 7" << std::endl;
+    std::cout << "  ./AizoProject2 --benchmark --problem 0 --algorithm 0 --structure 0 --vertexCount 100 --density 50 --iterations 50 --resultsFile wyniki.csv" << std::endl;
 }
 
 static std::string currentTimestamp() {
