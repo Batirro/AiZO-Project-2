@@ -8,6 +8,47 @@ MinHeap::~MinHeap() {
     delete[] data;
 }
 
+MinHeap::MinHeap(const MinHeap& other)
+    : capacity(other.capacity), size(other.size) {
+    data = new HeapNode[capacity];
+    for (int i = 0; i < size; ++i) {
+        data[i] = other.data[i];
+    }
+}
+
+MinHeap& MinHeap::operator=(const MinHeap& other) {
+    if (this != &other) {
+        delete[] data;
+        capacity = other.capacity;
+        size = other.size;
+        data = new HeapNode[capacity];
+        for (int i = 0; i < size; ++i) {
+            data[i] = other.data[i];
+        }
+    }
+    return *this;
+}
+
+MinHeap::MinHeap(MinHeap&& other) noexcept
+    : data(other.data), capacity(other.capacity), size(other.size) {
+    other.data = nullptr;
+    other.capacity = 0;
+    other.size = 0;
+}
+
+MinHeap& MinHeap::operator=(MinHeap&& other) noexcept {
+    if (this != &other) {
+        delete[] data;
+        data = other.data;
+        capacity = other.capacity;
+        size = other.size;
+        other.data = nullptr;
+        other.capacity = 0;
+        other.size = 0;
+    }
+    return *this;
+}
+
 void MinHeap::resize(int newCapacity) {
     HeapNode* newData = new HeapNode[newCapacity];
     for (int i = 0; i < size; ++i) {

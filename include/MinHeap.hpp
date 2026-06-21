@@ -25,6 +25,11 @@ public:
     MinHeap();
     ~MinHeap();
 
+    MinHeap(const MinHeap& other);
+    MinHeap& operator=(const MinHeap& other);
+    MinHeap(MinHeap&& other) noexcept;
+    MinHeap& operator=(MinHeap&& other) noexcept;
+
     void push(int vertex, int cost);
     HeapNode pop();
     bool isEmpty() const;
