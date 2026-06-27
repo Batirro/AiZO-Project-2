@@ -73,27 +73,7 @@ static std::string currentTimestamp() {
     return oss.str();
 }
 
-static void writeCsvRow(const std::string& file, const std::string& timestamp,
-                        const std::string& problem, const std::string& algorithm,
-                        const std::string& structure, int vertices, int density,
-                        long long avgUs, long long minUs, long long maxUs) {
-    std::ifstream check(file);
-    bool needsHeader = !check.good();
-    check.close();
 
-    std::ofstream ofs(file, std::ios::app);
-    if (!ofs) {
-        std::cerr << "Blad: Nie mozna otworzyc pliku: " << file << std::endl;
-        return;
-    }
-    if (needsHeader) {
-        ofs << "timestamp,problem,algorithm,structure,vertices,density_pct,"
-               "avg_us,min_us,max_us\n";
-    }
-    ofs << timestamp << "," << problem << "," << algorithm << ","
-        << structure << "," << vertices << "," << density << ","
-        << avgUs << "," << minUs << "," << maxUs << "\n";
-}
 
 static void writeMSTToFile(std::ofstream& f, const MSTResult& r) {
     if (!r.success) {
@@ -314,6 +294,21 @@ static void runBenchmark() {
         long long minUs = std::numeric_limits<long long>::max();
         long long maxUs = 0;
 
+        std::ifstream checkCsv(outFile);
+        bool needsHeader = !checkCsv.good();
+        checkCsv.close();
+
+        std::ofstream csv(outFile, std::ios::app);
+        if (!csv) {
+            std::cerr << "Blad: Nie mozna otworzyc pliku: " << outFile << std::endl;
+            return;
+        }
+        if (needsHeader) {
+            csv << "timestamp,problem,algorithm,structure,vertices,density_pct,iteration,time_us\n";
+        }
+
+        std::string ts = currentTimestamp();
+
         for (int i = 0; i < iters; i++) {
             GraphGenerator gen(vertices, density, directed);
             Graph* g = gen.generate(useList);
@@ -343,17 +338,17 @@ static void runBenchmark() {
             if (us < minUs) minUs = us;
             if (us > maxUs) maxUs = us;
 
+            csv << ts << "," << probName << "," << algoName << ","
+                << structName << "," << vertices << "," << densityPct << ","
+                << i << "," << us << "\n";
+
             delete g;
         }
 
         long long avgUs = total / iters;
-        std::string ts  = currentTimestamp();
 
         std::cout << "[" << ts << "] " << algoName << " / " << structName
                   << " | avg=" << avgUs << "us  min=" << minUs << "us  max=" << maxUs << "us" << std::endl;
-
-        writeCsvRow(outFile, ts, probName, algoName, structName,
-                    vertices, densityPct, avgUs, minUs, maxUs);
     };
 
     auto algo = Parameters::algorithm;

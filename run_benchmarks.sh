@@ -3,10 +3,12 @@ BUILD=~/aizo_project_2/build
 cd $BUILD
 
 ITERATIONS=50
-SIZES="10 50 100 200 500"
-DENSITIES="25 50 75 99"
-MST_RESULTS="mst_results.csv"
-SP_RESULTS="sp_results.csv"
+
+SIZES_A="10 50 100 200 500"
+DENSITY_A=50
+
+SIZE_B=100
+DENSITIES_B="25 50 75 99"
 
 # Algorytmy MST: 1=prim, 2=kruskal
 MST_ALGORITHMS="1 2"
@@ -15,30 +17,51 @@ SP_ALGORITHMS="3 4"
 # Struktury: 1=incidenceMatrix, 2=adjacencyList
 STRUCTURES="1 2"
 
-echo "=== MST ==="
+
+echo "MST - Badanie A (zmienny rozmiar, gestosc=${DENSITY_A}%)"
 for alg in $MST_ALGORITHMS; do
   for struct in $STRUCTURES; do
-    for n in $SIZES; do
-      for d in $DENSITIES; do
-        echo "MST alg=$alg struct=$struct n=$n d=$d"
-        ./AizoProject2 --benchmark --problem 0 --algorithm $alg --structure $struct \
-          --vertexCount $n --density $d --iterations $ITERATIONS \
-          --resultsFile "$MST_RESULTS"
-      done
+    for n in $SIZES_A; do
+      echo "MST alg=$alg struct=$struct n=$n d=$DENSITY_A"
+      ./AizoProject2 --benchmark --problem 0 --algorithm $alg --structure $struct \
+        --vertexCount $n --density $DENSITY_A --iterations $ITERATIONS \
+        --resultsFile "mst_results_A.csv"
     done
   done
 done
 
-echo "=== SP ==="
+echo "SP - Badanie A (zmienny rozmiar, gestosc=${DENSITY_A}%)"
 for alg in $SP_ALGORITHMS; do
   for struct in $STRUCTURES; do
-    for n in $SIZES; do
-      for d in $DENSITIES; do
-        echo "SP alg=$alg struct=$struct n=$n d=$d"
-        ./AizoProject2 --benchmark --problem 1 --algorithm $alg --structure $struct \
-          --vertexCount $n --density $d --iterations $ITERATIONS \
-          --resultsFile "$SP_RESULTS"
-      done
+    for n in $SIZES_A; do
+      echo "SP alg=$alg struct=$struct n=$n d=$DENSITY_A"
+      ./AizoProject2 --benchmark --problem 1 --algorithm $alg --structure $struct \
+        --vertexCount $n --density $DENSITY_A --iterations $ITERATIONS \
+        --resultsFile "sp_results_A.csv"
+    done
+  done
+done
+
+echo "MST - Badanie B (zmienna gestosc, n=${SIZE_B})"
+for alg in $MST_ALGORITHMS; do
+  for struct in $STRUCTURES; do
+    for d in $DENSITIES_B; do
+      echo "MST alg=$alg struct=$struct n=$SIZE_B d=$d"
+      ./AizoProject2 --benchmark --problem 0 --algorithm $alg --structure $struct \
+        --vertexCount $SIZE_B --density $d --iterations $ITERATIONS \
+        --resultsFile "mst_results_B.csv"
+    done
+  done
+done
+
+echo "SP - Badanie B (zmienna gestosc, n=${SIZE_B})"
+for alg in $SP_ALGORITHMS; do
+  for struct in $STRUCTURES; do
+    for d in $DENSITIES_B; do
+      echo "SP alg=$alg struct=$struct n=$SIZE_B d=$d"
+      ./AizoProject2 --benchmark --problem 1 --algorithm $alg --structure $struct \
+        --vertexCount $SIZE_B --density $d --iterations $ITERATIONS \
+        --resultsFile "sp_results_B.csv"
     done
   done
 done
