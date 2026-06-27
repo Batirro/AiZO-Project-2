@@ -77,26 +77,25 @@ static std::string currentTimestamp() {
 
 static void writeMSTToFile(std::ofstream& f, const MSTResult& r) {
     if (!r.success) {
-        f << "MST nie znalezione lub graf nie jest spojny\n\n";
+        f << "MST nie znalezione lub graf nie jest spojny\n";
         return;
     }
-    f << "Calkowity koszt: " << r.totalCost << "\n";
-    f << "Krawedzie MST:\n";
+    f << "Krawedzie MST (koszt: " << r.totalCost << "):";
     for (int i = 0; i < r.edges.getSize(); i++) {
         const Edge& e = r.edges[i];
-        f << "  " << e.start << " -- " << e.end << " [waga: " << e.weight << "]\n";
+        f << " " << e.start << "--" << e.end << "[" << e.weight << "]";
     }
     f << "\n";
 }
 
 static void writeSPToFile(std::ofstream& f, const SPResult& r, int vs, int ve, int V) {
     if (!r.success) {
-        f << "SP nie znalezione\n\n";
+        f << "SP nie znalezione\n";
         return;
     }
     int cost = r.dist[ve];
     if (cost == std::numeric_limits<int>::max()) {
-        f << "Brak sciezki z " << vs << " do " << ve << "\n\n";
+        f << "Brak sciezki z " << vs << " do " << ve << "\n";
         return;
     }
     int* path = new int[V];
@@ -106,13 +105,12 @@ static void writeSPToFile(std::ofstream& f, const SPResult& r, int vs, int ve, i
         path[pathLen++] = cur;
         cur = r.parent[cur];
     }
-    f << "Koszt: " << cost << "\n";
-    f << "Sciezka: ";
+    f << "Sciezka (koszt: " << cost << "): ";
     for (int i = pathLen - 1; i >= 0; i--) {
         f << path[i];
-        if (i > 0) f << " -> ";
+        if (i > 0) f << "->";
     }
-    f << "\n\n";
+    f << "\n";
     delete[] path;
 }
 
@@ -175,7 +173,7 @@ static void runSingleFile() {
 
         if (outFile.is_open()) {
             outFile << "Reprezentacja: "
-                    << (isList ? "Lista sasiedztwa" : "Macierz incydencji") << " ===\n";
+                    << (isList ? "Lista sasiedztwa" : "Macierz incydencji") << "\n";
             std::ostringstream graphOss;
             std::streambuf* oldBuf = std::cout.rdbuf(graphOss.rdbuf());
             graph->print();
@@ -312,24 +310,24 @@ static void runBenchmark() {
         for (int i = 0; i < iters; i++) {
             GraphGenerator gen(vertices, density, directed);
             Graph* g = gen.generate(useList);
-            // Zapis do pliku
+            // Zapis przykladowego grafu z pierwszej iteracji
             if (i == 0) {
                 std::string graphFile = std::string(PROJECT_DATA_DIR) + "/"
-                                      + probName + "_"
-                                      + algoName + "_"
-                                      + structName + "_"
-                                      + "n" + std::to_string(vertices)
-                                      + "_d" + std::to_string(densityPct)
-                                      + ".txt";
+                                      + probName + "_" + algoName + "_"
+                                      + structName + "_n" + std::to_string(vertices)
+                                      + "_d" + std::to_string(densityPct) + ".txt";
                 gen.saveToFile(g, graphFile.c_str());
             }
 
+            MSTResult mstResult;
+            SPResult  spResult;
+
             auto t0 = std::chrono::high_resolution_clock::now();
 
-            if      (algoName == "prim")        { MSTResult r = PrimMST::findMST(g);              (void)r; }
-            else if (algoName == "kruskal")     { MSTResult r = KruskalMST::findMST(g);           (void)r; }
-            else if (algoName == "dijkstra")    { DijkstraSP d;    SPResult r = d.findSP(g, 0);   (void)r; }
-            else if (algoName == "bellmanFord") { BellmanFordSP b; SPResult r = b.findSP(g, 0);   (void)r; }
+            if      (algoName == "prim")        { mstResult = PrimMST::findMST(g); }
+            else if (algoName == "kruskal")     { mstResult = KruskalMST::findMST(g); }
+            else if (algoName == "dijkstra")    { DijkstraSP d;    spResult = d.findSP(g, 0); }
+            else if (algoName == "bellmanFord") { BellmanFordSP b; spResult = b.findSP(g, 0); }
 
             auto t1 = std::chrono::high_resolution_clock::now();
             long long us = std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0).count();
@@ -341,6 +339,21 @@ static void runBenchmark() {
             csv << ts << "," << probName << "," << algoName << ","
                 << structName << "," << vertices << "," << densityPct << ","
                 << i << "," << us << "\n";
+
+            if (i == 0) {
+                std::ostringstream reprOss;
+                std::streambuf* oldBuf = std::cout.rdbuf(reprOss.rdbuf());
+                g->print();
+                std::cout.rdbuf(oldBuf);
+                csv << reprOss.str();
+
+                if (algoName == "prim" || algoName == "kruskal") {
+                    writeMSTToFile(csv, mstResult);
+                } else {
+                    writeSPToFile(csv, spResult, 0, g->getVerticesCount() - 1, g->getVerticesCount());
+                }
+                csv << "\n";
+            }
 
             delete g;
         }
