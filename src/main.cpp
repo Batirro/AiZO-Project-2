@@ -1,12 +1,13 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
-#include <sstream>
 #include <limits>
+#include <filesystem>
 
-#include "Parameters.h"
+
 #include "Parameters.h"
 #include "AdjacencyList.hpp"
 #include "IncidenceMatrix.hpp"
@@ -44,7 +45,7 @@ static void printHelp() {
 
     std::cout << "Parametry trybu singleFile:" << std::endl;
     std::cout << "  --inputFile  <plik>    Wczytaj graf z pliku" << std::endl;
-    std::cout << "  --outputFile <plik>    Zapisz wygenerowany graf do data/<plik>" << std::endl;
+    std::cout << "  --outputFile <plik>    Zapisz wyniki do data/<plik>" << std::endl;
     std::cout << "  --vertexCount <n>      Generuj graf o n wierzcholkach" << std::endl;
     std::cout << "  --density <d>          Gestosc grafu w % (np. 50)" << std::endl;
     std::cout << "  --vertexStart <v>      Wierzcholek startowy (SP)" << std::endl;
@@ -94,7 +95,50 @@ static void writeCsvRow(const std::string& file, const std::string& timestamp,
         << avgUs << "," << minUs << "," << maxUs << "\n";
 }
 
+static void writeMSTToFile(std::ofstream& f, const MSTResult& r) {
+    if (!r.success) {
+        f << "MST nie znalezione lub graf nie jest spojny\n\n";
+        return;
+    }
+    f << "Calkowity koszt: " << r.totalCost << "\n";
+    f << "Krawedzie MST:\n";
+    for (int i = 0; i < r.edges.getSize(); i++) {
+        const Edge& e = r.edges[i];
+        f << "  " << e.start << " -- " << e.end << " [waga: " << e.weight << "]\n";
+    }
+    f << "\n";
+}
+
+static void writeSPToFile(std::ofstream& f, const SPResult& r, int vs, int ve, int V) {
+    if (!r.success) {
+        f << "SP nie znalezione\n\n";
+        return;
+    }
+    int cost = r.dist[ve];
+    if (cost == std::numeric_limits<int>::max()) {
+        f << "Brak sciezki z " << vs << " do " << ve << "\n\n";
+        return;
+    }
+    int* path = new int[V];
+    int pathLen = 0;
+    int cur = ve;
+    while (cur != -1) {
+        path[pathLen++] = cur;
+        cur = r.parent[cur];
+    }
+    f << "Koszt: " << cost << "\n";
+    f << "Sciezka: ";
+    for (int i = pathLen - 1; i >= 0; i--) {
+        f << path[i];
+        if (i > 0) f << " -> ";
+    }
+    f << "\n\n";
+    delete[] path;
+}
+
 static void runSingleFile() {
+    (void)std::filesystem::create_directories(PROJECT_DATA_DIR);
+
     bool directed = (Parameters::problem == Parameters::Problems::sp);
 
     bool doList   = (Parameters::structure == Parameters::Structures::adjacencyList
@@ -103,6 +147,15 @@ static void runSingleFile() {
     bool doMatrix = (Parameters::structure == Parameters::Structures::incidenceMatrix
                      || Parameters::structure == Parameters::Structures::allStructures
                      || Parameters::structure == Parameters::Structures::undefined);
+
+    if (!Parameters::outputFile.empty()) {
+        std::string outPath = std::string(PROJECT_DATA_DIR) + "/" + Parameters::outputFile;
+        std::ofstream outInit(outPath, std::ios::out);
+        if (!outInit) {
+            std::cerr << "Blad: Nie mozna utworzyc pliku wynikowego: " << outPath << std::endl;
+        }
+        outInit.close();
+    }
 
     auto runOnGraph = [&](bool isList) {
         Graph* graph = nullptr;
@@ -123,20 +176,36 @@ static void runSingleFile() {
                       << graph->getEdgesCount() << " krawedzi, "
                       << "gestosc=" << (Parameters::density > 0 ? Parameters::density : 50)
                       << "%, " << (directed ? "skierowany" : "nieskierowany") << std::endl;
-            // Zapis do pliku
-            if (!Parameters::outputFile.empty()) {
-                std::string dataPath = std::string(PROJECT_DATA_DIR) + "/" + Parameters::outputFile;
-                gen.saveToFile(graph, dataPath.c_str());
-                std::cout << "Graf zapisany do: " << dataPath << std::endl;
-            }
         } else {
             std::cerr << "Blad: Podaj plik (-f) lub liczbe wierzcholkow (-n)" << std::endl;
             return;
         }
 
+        std::ofstream outFile;
+        if (!Parameters::outputFile.empty()) {
+            std::string outPath = std::string(PROJECT_DATA_DIR) + "/" + Parameters::outputFile;
+            outFile.open(outPath, std::ios::app);
+            if (!outFile) {
+                std::cerr << "Blad: Nie mozna otworzyc pliku wynikowego: " << outPath << std::endl;
+            }
+        }
+
         std::cout << "Reprezentacja: "
                   << (isList ? "Lista sasiedztwa" : "Macierz incydencji") << std::endl;
-        graph->print();
+
+        if (outFile.is_open()) {
+            outFile << "Reprezentacja: "
+                    << (isList ? "Lista sasiedztwa" : "Macierz incydencji") << " ===\n";
+            std::ostringstream graphOss;
+            std::streambuf* oldBuf = std::cout.rdbuf(graphOss.rdbuf());
+            graph->print();
+            std::cout.rdbuf(oldBuf);
+            std::string graphStr = graphOss.str();
+            std::cout << graphStr;
+            outFile << graphStr << "\n";
+        } else {
+            graph->print();
+        }
 
         // MST
         if (Parameters::problem == Parameters::Problems::mst
@@ -149,6 +218,10 @@ static void runSingleFile() {
                 std::cout << "\n--- Algorytm Prima ---" << std::endl;
                 MSTResult r = PrimMST::findMST(graph);
                 PrimMST::printMST(r);
+                if (outFile.is_open()) {
+                    outFile << "--- Algorytm Prima ---\n";
+                    writeMSTToFile(outFile, r);
+                }
             }
             if (algo == Parameters::Algorithms::kruskal
                 || algo == Parameters::Algorithms::allAlgorithms
@@ -156,6 +229,10 @@ static void runSingleFile() {
                 std::cout << "\n--- Algorytm Kruskala ---" << std::endl;
                 MSTResult r = KruskalMST::findMST(graph);
                 KruskalMST::printMST(r);
+                if (outFile.is_open()) {
+                    outFile << "--- Algorytm Kruskala ---\n";
+                    writeMSTToFile(outFile, r);
+                }
             }
         }
 
@@ -180,6 +257,10 @@ static void runSingleFile() {
                 DijkstraSP dijkstra;
                 SPResult r = dijkstra.findSP(graph, vs);
                 dijkstra.printSP(r, vs, ve, V);
+                if (outFile.is_open()) {
+                    outFile << "--- Algorytm Dijkstry ---\n";
+                    writeSPToFile(outFile, r, vs, ve, V);
+                }
             }
             if (algo == Parameters::Algorithms::bellmanFord
                 || algo == Parameters::Algorithms::allAlgorithms
@@ -188,6 +269,10 @@ static void runSingleFile() {
                 BellmanFordSP bellman;
                 SPResult r = bellman.findSP(graph, vs);
                 bellman.printSP(r, vs, ve, V);
+                if (outFile.is_open()) {
+                    outFile << "--- Algorytm Forda-Bellmana ---\n";
+                    writeSPToFile(outFile, r, vs, ve, V);
+                }
             }
         }
 
@@ -199,6 +284,8 @@ static void runSingleFile() {
 }
 
 static void runBenchmark() {
+    (void)std::filesystem::create_directories(PROJECT_DATA_DIR);
+
     int   vertices   = (Parameters::vertexCount > 0) ? Parameters::vertexCount : 100;
     int   densityPct = (Parameters::density     > 0) ? Parameters::density     : 50;
     int   iters      = (Parameters::iterations  > 0) ? Parameters::iterations  : 50;
